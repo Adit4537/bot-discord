@@ -2,7 +2,26 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 
-const cooldown = new Set();
+console.log("🚀 BOT STARTING...");
+
+// ======================
+// ❗ HANDLE ERROR (ANTI CRASH)
+// ======================
+process.on('uncaughtException', err => {
+  console.error('UNCAUGHT ERROR:', err);
+});
+
+process.on('unhandledRejection', err => {
+  console.error('UNHANDLED REJECTION:', err);
+});
+
+// ======================
+// ❗ VALIDASI TOKEN
+// ======================
+if (!process.env.TOKEN) {
+  console.log("❌ TOKEN GA KEBACA! CEK VARIABLES");
+  process.exit(1);
+}
 
 // ======================
 // 📂 DATABASE
@@ -24,6 +43,9 @@ const client = new Client({
   ]
 });
 
+// ======================
+// ✅ READY
+// ======================
 client.once('clientReady', () => {
   console.log(`🔥 Bot aktif sebagai ${client.user.tag}`);
 });
@@ -51,6 +73,8 @@ function getTier(level) {
   return { name: 'Kakek Buyut 👴', color: '#ef4444' };
 }
 
+const cooldown = new Set();
+
 // ======================
 // 🎮 MESSAGE EVENT
 // ======================
@@ -66,7 +90,7 @@ client.on('messageCreate', async message => {
   let user = data[id];
 
   // ======================
-  // 🔥 COMMAND
+  // COMMAND
   // ======================
   if (message.content === '!level') {
     return sendLevel(message, user);
@@ -97,7 +121,7 @@ client.on('messageCreate', async message => {
 });
 
 // ======================
-// 🎨 LEVEL (FIX)
+// 🎨 LEVEL
 // ======================
 async function sendLevel(message, user) {
 
@@ -169,4 +193,7 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 
 });
 
+// ======================
+// 🚀 LOGIN
+// ======================
 client.login(process.env.TOKEN);
