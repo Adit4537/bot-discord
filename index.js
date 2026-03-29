@@ -121,22 +121,21 @@ client.on('messageCreate', async message => {
 });
 
 // ======================
-// 🎨 LEVEL
+// 🎨 LEVEL (PAKE BG LU)
 // ======================
 async function sendLevel(message, user) {
 
   const neededXP = getNeededXP(user.level);
   const tier = getTier(user.level);
 
+  const avatar = message.author.displayAvatarURL({ extension: 'png' });
+  const username = encodeURIComponent(message.author.username);
+
+  const imageURL = `https://api.popcat.xyz/rank?background=https://i.ibb.co/d4TPynZx/IMG-4572.jpg&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}`;
+
   const embed = new EmbedBuilder()
     .setColor(tier.color)
-    .setTitle(`🔥 ${message.author.username}`)
-    .setThumbnail(message.author.displayAvatarURL())
-    .addFields(
-      { name: 'Level', value: `${user.level}`, inline: true },
-      { name: 'XP', value: `${user.xp}/${neededXP}`, inline: true },
-      { name: 'Tier', value: `${tier.name}`, inline: true }
-    );
+    .setImage(imageURL);
 
   return message.reply({ embeds: [embed] });
 }
