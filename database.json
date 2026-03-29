@@ -1,13 +1,15 @@
 {
   "1034845567379066933": {
-    "xp": 212,
+    "xp": 224,
     "level": 3,
-    "messages": 11
+    "messages": 12,
+    "voice": 0,
+    "badges": []
   },
   "1348625193781825587": {
-    "xp": 64,
+    "xp": 78,
     "level": 1,
-    "messages": 14,
+    "messages": 15,
     "voice": 0,
     "badges": []
   }
