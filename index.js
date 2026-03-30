@@ -5,7 +5,7 @@ const fs = require('fs');
 console.log("🚀 BOT STARTING...");
 
 // ======================
-// ❗ ANTI CRASH
+// ❗ ANTI ERROR
 // ======================
 process.on('uncaughtException', err => {
   console.error('ERROR:', err);
@@ -13,17 +13,6 @@ process.on('uncaughtException', err => {
 process.on('unhandledRejection', err => {
   console.error('REJECTION:', err);
 });
-
-// ======================
-// ❗ LOAD CANVAS (SAFE)
-// ======================
-let Canvas;
-try {
-  Canvas = require('canvas');
-  console.log("✅ Canvas loaded");
-} catch (e) {
-  console.log("⚠️ Canvas gagal load (Railway mode)");
-}
 
 // ======================
 // ❗ TOKEN CHECK
@@ -92,11 +81,20 @@ client.on('messageCreate', async message => {
 
   let user = data[id];
 
+  // ======================
+  // COMMAND
+  // ======================
   if (message.content === '!level') {
-    return sendLevel(message, user, id);
+    return sendLevel(message, user);
   }
 
-  // XP
+  if (message.content === '!leaderboard') {
+    return sendLeaderboard(message);
+  }
+
+  // ======================
+  // XP SYSTEM
+  // ======================
   if (!cooldown.has(id)) {
     cooldown.add(id);
     setTimeout(() => cooldown.delete(id), 60000);
@@ -113,66 +111,49 @@ client.on('messageCreate', async message => {
 });
 
 // ======================
-// 🎨 LEVEL CARD (SMART)
+// 📊 LEVEL (CLEAN EMBED)
 // ======================
-async function sendLevel(message, user, id) {
-
-  // ======================
-  // 🧠 CANVAS MODE
-  // ======================
-  if (Canvas) {
-    try {
-
-      const canvas = Canvas.createCanvas(1000, 300);
-      const ctx = canvas.getContext('2d');
-
-      const bg = await Canvas.loadImage('https://files.catbox.moe/kgbned.jpeg');
-      ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      const avatar = await Canvas.loadImage(
-        message.author.displayAvatarURL({ extension: 'png' })
-      );
-
-      ctx.beginPath();
-      ctx.arc(120, 150, 70, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
-      ctx.drawImage(avatar, 50, 80, 140, 140);
-
-      const neededXP = getNeededXP(user.level);
-      const tier = getTier(user.level);
-
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 30px sans-serif';
-      ctx.fillText(message.author.username, 230, 120);
-
-      ctx.fillStyle = tier.color;
-      ctx.fillRect(230, 200, 600 * (user.xp / neededXP), 20);
-
-      return message.reply({
-        files: [{ attachment: canvas.toBuffer(), name: 'rank.png' }]
-      });
-
-    } catch (err) {
-      console.log("⚠️ Canvas error:", err);
-    }
-  }
-
-  // ======================
-  // 💀 FALLBACK MODE
-  // ======================
+function sendLevel(message, user) {
   const neededXP = getNeededXP(user.level);
   const tier = getTier(user.level);
 
   const embed = new EmbedBuilder()
     .setColor(tier.color)
-    .setTitle(`🔥 ${message.author.username}`)
-    .setDescription(`Level: ${user.level}\nXP: ${user.xp}/${neededXP}\nTier: ${tier.name}`);
+    .setAuthor({
+      name: message.author.username,
+      iconURL: message.author.displayAvatarURL()
+    })
+    .setTitle("🔥 LEVEL STATUS")
+    .addFields(
+      { name: "Level", value: `${user.level}`, inline: true },
+      { name: "XP", value: `${user.xp}/${neededXP}`, inline: true },
+      { name: "Tier", value: tier.name, inline: true }
+    )
+    .setThumbnail(message.author.displayAvatarURL())
+    .setFooter({ text: "Keep grinding 🚀" });
 
   return message.reply({ embeds: [embed] });
+}
+
+// ======================
+// 🏆 LEADERBOARD
+// ======================
+function sendLeaderboard(message) {
+  const users = Object.entries(data)
+    .map(([id, val]) => ({ id, ...val }))
+    .sort((a, b) => b.level - a.level || b.xp - a.xp)
+    .slice(0, 10);
+
+  let text = users.map((u, i) =>
+    `#${i+1} <@${u.id}> • Lv.${u.level} • ${u.xp} XP`
+  ).join('\n');
+
+  const embed = new EmbedBuilder()
+    .setColor('#a855f7')
+    .setTitle('🏆 Leaderboard')
+    .setDescription(text);
+
+  return message.channel.send({ embeds: [embed] });
 }
 
 // ======================
