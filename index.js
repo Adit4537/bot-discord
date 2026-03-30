@@ -8,18 +8,17 @@ console.log("🚀 BOT STARTING...");
 // ❗ ANTI CRASH
 // ======================
 process.on('uncaughtException', err => {
-  console.error('UNCAUGHT ERROR:', err);
+  console.error('ERROR:', err);
 });
-
 process.on('unhandledRejection', err => {
-  console.error('UNHANDLED REJECTION:', err);
+  console.error('PROMISE ERROR:', err);
 });
 
 // ======================
 // ❗ TOKEN CHECK
 // ======================
 if (!process.env.TOKEN) {
-  console.log("❌ TOKEN GA ADA DI .env");
+  console.log("❌ TOKEN GA ADA");
   process.exit(1);
 }
 
@@ -121,7 +120,7 @@ client.on('messageCreate', async message => {
 });
 
 // ======================
-// 🎨 LEVEL CARD (FIX POPCAT)
+// 🎨 LEVEL CARD (FIX)
 // ======================
 async function sendLevel(message, user) {
 
@@ -134,11 +133,12 @@ async function sendLevel(message, user) {
 
   const username = encodeURIComponent(message.author.username);
 
+  // ✅ BACKGROUND LU (FIX 100%)
   const background = encodeURIComponent(
-    "https://files.catbox.moe/9l6z8y.jpg"
+    "https://files.catbox.moe/kgbned.jpeg"
   );
 
-  const imageURL = `https://api.popcat.xyz/rank?background=${background}&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}`;
+  const imageURL = `https://api.popcat.xyz/rank?background=${background}&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}&t=${Date.now()}`;
 
   const embed = new EmbedBuilder()
     .setColor(tier.color)
