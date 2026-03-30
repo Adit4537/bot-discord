@@ -1,17 +1,19 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
+const Canvas = require('canvas');
 const fs = require('fs');
 
 console.log("🚀 BOT STARTING...");
 
 // ======================
-// ❗ ANTI CRASH
+// ❗ ANTI CRASH (WAJIB)
 // ======================
 process.on('uncaughtException', err => {
   console.error('ERROR:', err);
 });
+
 process.on('unhandledRejection', err => {
-  console.error('PROMISE ERROR:', err);
+  console.error('REJECTION:', err);
 });
 
 // ======================
@@ -37,14 +39,10 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildVoiceStates
+    GatewayIntentBits.MessageContent
   ]
 });
 
-// ======================
-// ✅ READY
-// ======================
 client.once('clientReady', () => {
   console.log(`🔥 Bot aktif sebagai ${client.user.tag}`);
 });
@@ -62,9 +60,6 @@ function getNeededXP(level) {
   return 6000 + ((level - 30) * 3000);
 }
 
-// ======================
-// 🎖️ TIER
-// ======================
 function getTier(level) {
   if (level < 5) return { name: 'Junior 🌱', color: '#a855f7' };
   if (level < 10) return { name: 'Senior ⚡', color: '#22c55e' };
@@ -75,7 +70,7 @@ function getTier(level) {
 const cooldown = new Set();
 
 // ======================
-// 💬 MESSAGE EVENT
+// 🎮 MESSAGE EVENT
 // ======================
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
@@ -83,27 +78,20 @@ client.on('messageCreate', async message => {
   const id = message.author.id;
 
   if (!data[id]) {
-    data[id] = { xp: 0, level: 1, messages: 0, voice: 0, badges: [] };
+    data[id] = { xp: 0, level: 1 };
   }
 
   let user = data[id];
 
-  // ======================
-  // COMMAND
-  // ======================
   if (message.content === '!level') {
-    return sendLevel(message, user);
+    return sendLevel(message, user, id);
   }
 
   if (message.content === '!leaderboard') {
     return sendLeaderboard(message);
   }
 
-  // ======================
-  // XP
-  // ======================
-  user.messages++;
-
+  // XP SYSTEM
   if (!cooldown.has(id)) {
     cooldown.add(id);
     setTimeout(() => cooldown.delete(id), 60000);
@@ -120,38 +108,101 @@ client.on('messageCreate', async message => {
 });
 
 // ======================
-// 🎨 LEVEL CARD (FIX)
+// 🎨 LEVEL CARD CANVAS
 // ======================
-async function sendLevel(message, user) {
+async function sendLevel(message, user, id) {
+
+  const canvas = Canvas.createCanvas(1000, 300);
+  const ctx = canvas.getContext('2d');
+
+  // BG (PAKE GAMBAR LU)
+  const bg = await Canvas.loadImage('https://files.catbox.moe/kgbned.jpeg');
+  ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+
+  // DARK OVERLAY
+  ctx.fillStyle = 'rgba(0,0,0,0.65)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // AVATAR
+  const avatar = await Canvas.loadImage(
+    message.author.displayAvatarURL({ extension: 'png' })
+  );
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(120, 150, 70, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(avatar, 50, 80, 140, 140);
+  ctx.restore();
+
+  // RANK
+  const users = Object.entries(data)
+    .map(([id, val]) => ({ id, ...val }))
+    .sort((a, b) => b.level - a.level || b.xp - a.xp);
+
+  const rank = users.findIndex(u => u.id === id) + 1;
 
   const neededXP = getNeededXP(user.level);
   const tier = getTier(user.level);
 
-  const avatar = encodeURIComponent(
-    message.author.displayAvatarURL({ extension: 'png' })
-  );
+  // TEXT
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 35px sans-serif';
+  ctx.fillText(message.author.username, 230, 110);
 
-  const username = encodeURIComponent(message.author.username);
+  ctx.fillStyle = tier.color;
+  ctx.font = '20px sans-serif';
+  ctx.fillText(tier.name, 230, 150);
 
-  // ✅ BACKGROUND LU (FIX 100%)
-  const background = encodeURIComponent(
-    "https://files.catbox.moe/kgbned.jpeg"
-  );
+  // XP TEXT
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '18px sans-serif';
+  ctx.fillText(`${user.xp}/${neededXP} XP`, 230, 185);
 
-  const imageURL = `https://api.popcat.xyz/rank?background=${background}&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}&t=${Date.now()}`;
+  // PROGRESS BAR
+  const barX = 230;
+  const barY = 200;
+  const barWidth = 600;
+  const progress = user.xp / neededXP;
 
-  const embed = new EmbedBuilder()
-    .setColor(tier.color)
-    .setImage(imageURL);
+  ctx.fillStyle = '#2a2a3d';
+  ctx.fillRect(barX, barY, barWidth, 20);
 
-  return message.reply({ embeds: [embed] });
+  const gradient = ctx.createLinearGradient(barX, 0, barX + barWidth, 0);
+  gradient.addColorStop(0, tier.color);
+  gradient.addColorStop(1, '#ffffff');
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(barX, barY, barWidth * progress, 20);
+
+  // SHINE EFFECT
+  const shineX = barX + (barWidth * progress * 0.7);
+  const shine = ctx.createLinearGradient(shineX, 0, shineX + 80, 0);
+  shine.addColorStop(0, 'rgba(255,255,255,0)');
+  shine.addColorStop(0.5, 'rgba(255,255,255,0.7)');
+  shine.addColorStop(1, 'rgba(255,255,255,0)');
+
+  ctx.fillStyle = shine;
+  ctx.fillRect(shineX, barY, 80, 20);
+
+  // RANK KANAN
+  ctx.fillStyle = '#a855f7';
+  ctx.font = 'bold 50px sans-serif';
+  ctx.fillText(`#${rank}`, 780, 110);
+
+  ctx.fillStyle = '#fff';
+  ctx.font = '20px sans-serif';
+  ctx.fillText(`LEVEL ${user.level}`, 780, 150);
+
+  return message.reply({
+    files: [{ attachment: canvas.toBuffer(), name: 'rank.png' }]
+  });
 }
 
 // ======================
 // 🏆 LEADERBOARD
 // ======================
 function sendLeaderboard(message) {
-
   const users = Object.entries(data)
     .map(([id, val]) => ({ id, ...val }))
     .sort((a, b) => b.level - a.level || b.xp - a.xp)
@@ -168,36 +219,6 @@ function sendLeaderboard(message) {
 
   return message.channel.send({ embeds: [embed] });
 }
-
-// ======================
-// 🎤 VOICE TRACK
-// ======================
-const voiceMap = new Map();
-
-client.on('voiceStateUpdate', (oldState, newState) => {
-
-  const id = newState.id;
-
-  if (!data[id]) {
-    data[id] = { xp: 0, level: 1, messages: 0, voice: 0, badges: [] };
-  }
-
-  if (!oldState.channel && newState.channel) {
-    voiceMap.set(id, Date.now());
-  }
-
-  if (oldState.channel && !newState.channel) {
-    const joinTime = voiceMap.get(id);
-    if (!joinTime) return;
-
-    const duration = Math.floor((Date.now() - joinTime) / 60000);
-    data[id].voice += duration;
-
-    voiceMap.delete(id);
-    fs.writeFileSync('./database.json', JSON.stringify(data, null, 2));
-  }
-
-});
 
 // ======================
 // 🚀 LOGIN
