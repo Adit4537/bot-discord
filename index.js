@@ -121,17 +121,24 @@ client.on('messageCreate', async message => {
 });
 
 // ======================
-// 🎨 LEVEL CARD (BG LU)
+// 🎨 LEVEL CARD (FIX POPCAT)
 // ======================
 async function sendLevel(message, user) {
 
   const neededXP = getNeededXP(user.level);
   const tier = getTier(user.level);
 
-  const avatar = message.author.displayAvatarURL({ extension: 'png' });
+  const avatar = encodeURIComponent(
+    message.author.displayAvatarURL({ extension: 'png' })
+  );
+
   const username = encodeURIComponent(message.author.username);
 
-  const imageURL = `https://api.popcat.xyz/rank?background=https://files.catbox.moe/9l6z8y.jpg&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}`;
+  const background = encodeURIComponent(
+    "https://files.catbox.moe/9l6z8y.jpg"
+  );
+
+  const imageURL = `https://api.popcat.xyz/rank?background=${background}&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}`;
 
   const embed = new EmbedBuilder()
     .setColor(tier.color)
