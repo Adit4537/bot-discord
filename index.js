@@ -5,7 +5,7 @@ const fs = require('fs');
 console.log("🚀 BOT STARTING...");
 
 // ======================
-// ❗ HANDLE ERROR (ANTI CRASH)
+// ❗ ANTI CRASH
 // ======================
 process.on('uncaughtException', err => {
   console.error('UNCAUGHT ERROR:', err);
@@ -16,10 +16,10 @@ process.on('unhandledRejection', err => {
 });
 
 // ======================
-// ❗ VALIDASI TOKEN
+// ❗ TOKEN CHECK
 // ======================
 if (!process.env.TOKEN) {
-  console.log("❌ TOKEN GA KEBACA! CEK VARIABLES");
+  console.log("❌ TOKEN GA ADA DI .env");
   process.exit(1);
 }
 
@@ -76,7 +76,7 @@ function getTier(level) {
 const cooldown = new Set();
 
 // ======================
-// 🎮 MESSAGE EVENT
+// 💬 MESSAGE EVENT
 // ======================
 client.on('messageCreate', async message => {
   if (message.author.bot) return;
@@ -101,7 +101,7 @@ client.on('messageCreate', async message => {
   }
 
   // ======================
-  // XP SYSTEM
+  // XP
   // ======================
   user.messages++;
 
@@ -121,7 +121,7 @@ client.on('messageCreate', async message => {
 });
 
 // ======================
-// 🎨 LEVEL (PAKE BG LU)
+// 🎨 LEVEL CARD (BG LU)
 // ======================
 async function sendLevel(message, user) {
 
@@ -131,7 +131,7 @@ async function sendLevel(message, user) {
   const avatar = message.author.displayAvatarURL({ extension: 'png' });
   const username = encodeURIComponent(message.author.username);
 
-  const imageURL = `https://api.popcat.xyz/rank?background=https://i.ibb.co/d4TPynZx/IMG-4572.jpg&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}`;
+  const imageURL = `https://api.popcat.xyz/rank?background=https://files.catbox.moe/9l6z8y.jpg&avatar=${avatar}&level=${user.level}&xp=${user.xp}&nextlevelxp=${neededXP}&rank=1&username=${username}`;
 
   const embed = new EmbedBuilder()
     .setColor(tier.color)
